@@ -23,6 +23,7 @@ Sustainability Tracking: Add features to track and verify sustainable practices 
 Integration with Existing ERP Systems: Develop connectors to popular Enterprise Resource Planning systems for seamless data flow.
 Cross-Chain Compatibility: Extend the solution to operate across multiple blockchain networks.
 
-Contract Address: 0xd9145CCE52D386f254917e481eB44e9943F39138
-![Screenshot 2025-05-18 162209](https://github.com/user-attachments/assets/2a43d93e-6597-43ba-87de-0fea14d24305)
+Contract Address: 0x8aD1D41b257F412553A95b348191A9Dbc50DF12b
+![Screenshot 2025-05-19 104024](https://github.com/user-attachments/assets/7809551d-eedc-47e8-b7b3-604edf8d9b36)
+
 
