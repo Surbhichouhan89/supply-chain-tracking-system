@@ -4,9 +4,10 @@ pragma solidity ^0.8.19;
 contract SupplyChainTracker {
     address public owner;
     uint256 public productCounter;
-    
-    enum ProductStatus { Created, InTransit, Delivered, Verified }
-    
+
+    // Updated Enum
+    enum ProductStatus { Created, InTransit, Delivered, Verified, Returned, Cancelled }
+
     struct Product {
         uint256 id;
         string name;
@@ -19,49 +20,45 @@ contract SupplyChainTracker {
         string[] locationHistory;
         address[] ownershipHistory;
     }
-    
+
     mapping(uint256 => Product) public products;
     mapping(address => bool) public authorizedParties;
-    
+
     event ProductCreated(uint256 indexed productId, string name, address manufacturer);
     event ProductTransferred(uint256 indexed productId, address from, address to, string location);
     event ProductStatusUpdated(uint256 indexed productId, ProductStatus status);
+    event ProductReturned(uint256 indexed productId, address by);
+    event ProductCancelled(uint256 indexed productId, string reason);
     event PartyAuthorized(address indexed party);
     event PartyRevoked(address indexed party);
-    
+
     modifier onlyOwner() {
         require(msg.sender == owner, "Only owner can perform this action");
         _;
     }
-    
+
     modifier onlyAuthorized() {
         require(authorizedParties[msg.sender] || msg.sender == owner, "Not authorized");
         _;
     }
-    
+
     modifier productExists(uint256 _productId) {
         require(_productId <= productCounter && _productId > 0, "Product does not exist");
         _;
     }
-    
+
     constructor() {
         owner = msg.sender;
         authorizedParties[msg.sender] = true;
     }
-    
-    /**
-     * @dev Creates a new product in the supply chain
-     * @param _name Product name
-     * @param _description Product description
-     * @param _initialLocation Initial location of the product
-     */
+
     function createProduct(
         string memory _name,
         string memory _description,
         string memory _initialLocation
     ) external onlyAuthorized {
         productCounter++;
-        
+
         Product storage newProduct = products[productCounter];
         newProduct.id = productCounter;
         newProduct.name = _name;
@@ -73,16 +70,10 @@ contract SupplyChainTracker {
         newProduct.lastUpdated = block.timestamp;
         newProduct.locationHistory.push(_initialLocation);
         newProduct.ownershipHistory.push(msg.sender);
-        
+
         emit ProductCreated(productCounter, _name, msg.sender);
     }
-    
-    /**
-     * @dev Transfers product ownership and updates location
-     * @param _productId ID of the product to transfer
-     * @param _newOwner Address of the new owner
-     * @param _location Current location of the product
-     */
+
     function transferProduct(
         uint256 _productId,
         address _newOwner,
@@ -94,22 +85,17 @@ contract SupplyChainTracker {
             "Not authorized to transfer this product"
         );
         require(_newOwner != address(0), "Invalid new owner address");
-        
+
         address previousOwner = product.currentOwner;
         product.currentOwner = _newOwner;
         product.status = ProductStatus.InTransit;
         product.lastUpdated = block.timestamp;
         product.locationHistory.push(_location);
         product.ownershipHistory.push(_newOwner);
-        
+
         emit ProductTransferred(_productId, previousOwner, _newOwner, _location);
     }
-    
-    /**
-     * @dev Updates the status of a product
-     * @param _productId ID of the product
-     * @param _status New status of the product
-     */
+
     function updateProductStatus(
         uint256 _productId,
         ProductStatus _status
@@ -119,36 +105,46 @@ contract SupplyChainTracker {
             product.currentOwner == msg.sender || authorizedParties[msg.sender] || msg.sender == owner,
             "Not authorized to update this product"
         );
-        
+
         product.status = _status;
         product.lastUpdated = block.timestamp;
-        
+
         emit ProductStatusUpdated(_productId, _status);
     }
-    
-    /**
-     * @dev Authorizes a party to interact with the supply chain
-     * @param _party Address to authorize
-     */
+
+    // ✅ New function to mark as Returned
+    function markAsReturned(uint256 _productId) external onlyAuthorized productExists(_productId) {
+        Product storage product = products[_productId];
+        require(product.status == ProductStatus.Delivered || product.status == ProductStatus.Verified, "Can only return after delivery or verification");
+
+        product.status = ProductStatus.Returned;
+        product.lastUpdated = block.timestamp;
+
+        emit ProductReturned(_productId, msg.sender);
+    }
+
+    // ✅ New function to Cancel
+    function cancelProduct(uint256 _productId, string memory _reason) external onlyOwner productExists(_productId) {
+        Product storage product = products[_productId];
+        require(product.status == ProductStatus.Created || product.status == ProductStatus.InTransit, "Can only cancel early stage products");
+
+        product.status = ProductStatus.Cancelled;
+        product.lastUpdated = block.timestamp;
+
+        emit ProductCancelled(_productId, _reason);
+    }
+
     function authorizeParty(address _party) external onlyOwner {
         require(_party != address(0), "Invalid address");
         authorizedParties[_party] = true;
         emit PartyAuthorized(_party);
     }
-    
-    /**
-     * @dev Revokes authorization from a party
-     * @param _party Address to revoke authorization from
-     */
+
     function revokeParty(address _party) external onlyOwner {
         authorizedParties[_party] = false;
         emit PartyRevoked(_party);
     }
-    
-    /**
-     * @dev Returns complete product information
-     * @param _productId ID of the product
-     */
+
     function getProduct(uint256 _productId) external view productExists(_productId) returns (
         uint256 id,
         string memory name,
@@ -171,20 +167,24 @@ contract SupplyChainTracker {
             product.lastUpdated
         );
     }
-    
-    /**
-     * @dev Returns the location history of a product
-     * @param _productId ID of the product
-     */
+
     function getProductLocationHistory(uint256 _productId) external view productExists(_productId) returns (string[] memory) {
         return products[_productId].locationHistory;
     }
-    
-    /**
-     * @dev Returns the ownership history of a product
-     * @param _productId ID of the product
-     */
+
     function getProductOwnershipHistory(uint256 _productId) external view productExists(_productId) returns (address[] memory) {
         return products[_productId].ownershipHistory;
+    }
+
+    // ✅ Optional: Status as string for frontend convenience
+    function getProductStatusString(uint256 _productId) external view productExists(_productId) returns (string memory) {
+        ProductStatus status = products[_productId].status;
+        if (status == ProductStatus.Created) return "Created";
+        if (status == ProductStatus.InTransit) return "InTransit";
+        if (status == ProductStatus.Delivered) return "Delivered";
+        if (status == ProductStatus.Verified) return "Verified";
+        if (status == ProductStatus.Returned) return "Returned";
+        if (status == ProductStatus.Cancelled) return "Cancelled";
+        return "Unknown";
     }
 }
