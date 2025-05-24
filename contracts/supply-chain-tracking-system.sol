@@ -10,7 +10,7 @@ contract SupplyChainTracker {
     struct Product {
         uint256 id;
         string name;
-        string description;
+        string descrition;
         address manufacturer;
         address currentOwner;
         ProductStatus status;
