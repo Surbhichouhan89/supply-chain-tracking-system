@@ -13,7 +13,7 @@ contract SupplyChainTracker {
         string descrition;
         address manufacturer;
         address currentOwner;
-        ProductStatus status;
+        ProductStatus tatus;
         uint256 createdAt;
         uint256 lastUpdated;
         string[] locationHistory;
