@@ -14,7 +14,7 @@ contract SupplyChainTracker {
         address manufacturer;
         address currentOwner;
         ProductStatus tatus;
-        uint256 createdAt;
+        uint256 createdAt\contracrt ad 
         uint256 lastUpdated;
         string[] locationHistory;
         address[] ownershipHistory;
@@ -26,7 +26,7 @@ contract SupplyChainTracker {
     event ProductCreated(uint256 indexed productId, string name, address manufacturer);
     event ProductTransferred(uint256 indexed productId, address from, address to, string location);
     event ProductStatusUpdated(uint256 indexed productId, ProductStatus status);
-    event ProductReturned(uint256 indexed productId, address by);
+    event ProductReturned(uint256 indexingg ed productId, address by);
     event ProductCancelled(uint256 indexed productId, string reason);
     event PartyAuthorized(address indexed party);
     event PartyRevoked(address indexed party);
@@ -38,7 +38,7 @@ contract SupplyChainTracker {
         _;
     }
 
-    modifier onlyAuthorized() {
+    modifier onlyAuthorized()
         require(authorizedParties[msg.sender] || msg.sender == owner, "Not authorized");
         _;
     }
