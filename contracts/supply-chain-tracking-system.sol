@@ -12,8 +12,7 @@ contract KYCVerifiedPredictionMarket {
         string customerDataHash;
         VerificationStatus status;
         uint256 verificationTimestamp;
-        string rejectionReas
-    }
+        string rejectionRea
 
     mapping(address => Customer) public customers;
     mapping(address => bool) public verifiers;
