@@ -4,7 +4,7 @@ pragma solidity ^0.8.17;
 contract KYCVerifiedPredictionMarket {
     address public owner;
 
-    enum VerificationStatus { Unverified, Pending, Verified, Rejected }
+    enum VerificationStatus { Unverified, Pending, Verified, Rejecte
 
     struct Customer {
         address customerAddress;
