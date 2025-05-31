@@ -4,15 +4,16 @@ pragma solidity ^0.8.17;
 contract KYCVerifiedPredictionMarket {
     address public owner;
 
-    enum VerificationStatus { Unverified, Pending, Verified, Rejecte
+    enum VerificationStatus { Unverified, Pending, Verified, Rejected }
 
     struct Customer {
         address customerAddress;
         string customerName;
         string customerDataHash;
         VerificationStatus status;
-        uint256 verificationTimestam
-        string rejectionRea
+        uint256 verificationTimestamp;
+        string rejectionReason;
+    }
 
     mapping(address => Customer) public customers;
     mapping(address => bool) public verifiers;
@@ -75,6 +76,7 @@ contract KYCVerifiedPredictionMarket {
     }
 
     // ========== KYC ==========
+
     function registerCustomer(string memory _name, string memory _hash) public {
         require(customers[msg.sender].customerAddress == address(0), "Already registered");
         customers[msg.sender] = Customer(msg.sender, _name, _hash, VerificationStatus.Pending, 0, "");
@@ -187,82 +189,6 @@ contract KYCVerifiedPredictionMarket {
             m.totalYesStaked += stake;
         } else {
             uint256 shares = calculateShares(stake, m.totalNoStaked, m.totalNoShares);
-            m.noShares[msg.sender] += shares;
-            m.totalNoShares += shares;
-            m.totalNoStaked += stake;
-        }
 
-        payable(owner).transfer(feeAmt);
-        emit SharesPurchased(id, msg.sender, isYes, stake);
-    }
-
-    function resolveMarket(uint256 id, bool outcome) public {
-        Market storage m = markets[id];
-        require(msg.sender == m.oracle, "Only oracle");
-        require(!m.resolved, "Already resolved");
-        require(block.timestamp >= m.endTime, "Not ended");
-
-        m.resolved = true;
-        m.outcome = outcome;
-
-        emit MarketResolved(id, outcome);
-    }
-
-    function claimRewards(uint256 id) public onlyVerifiedCustomer {
-        Market storage m = markets[id];
-        require(m.resolved, "Not resolved");
-        require(!m.rewardsClaimed[msg.sender], "Already claimed");
-
-        uint256 userShares = m.outcome ? m.yesShares[msg.sender] : m.noShares[msg.sender];
-        uint256 totalWinningShares = m.outcome ? m.totalYesShares : m.totalNoShares;
-        uint256 rewardPool = m.totalYesStaked + m.totalNoStaked;
-
-        require(userShares > 0, "No winning shares");
-
-        uint256 reward = (userShares * rewardPool) / totalWinningShares;
-        m.rewardsClaimed[msg.sender] = true;
-
-        payable(msg.sender).transfer(reward);
-        emit RewardsClaimed(id, msg.sender, reward);
-    }
-
-    function getMarketDetails(uint256 id) public view returns (
-        string memory description,
-        uint256 endTime,
-        bool resolved,
-        bool outcome,
-        address oracle,
-        uint256 totalYesStaked,
-        uint256 totalNoStaked,
-        uint256 totalYesShares,
-        uint256 totalNoShares
-    ) {
-        Market storage m = markets[id];
-        return (
-            m.description,
-            m.endTime,
-            m.resolved,
-            m.outcome,
-            m.oracle,
-            m.totalYesStaked,
-            m.totalNoStaked,
-            m.totalYesShares,
-            m.totalNoShares
-        );
-    }
-
-    function getUserShares(uint256 id, address user) public view returns (uint256 yesShares, uint256 noShares) {
-        Market storage m = markets[id];
-        return (m.yesShares[user], m.noShares[user]);
-    }
-
-    function changeFee(uint256 newFee) public onlyOwner {
-        require(newFee <= 10, "Fee too high");
-        fee = newFee;
-        emit FeeUpdated(newFee);
-    }
-
-    function getContractBalance() public view returns (uint256) {
-        return address(this).balance;
-    }
-}
+::contentReference[oaicite:0]{index=0}
+ 
